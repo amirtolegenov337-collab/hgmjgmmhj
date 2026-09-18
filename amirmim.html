@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduAI — ИИ-помощник учителя</title>
+<style>
+:root{
+  --bg:#f5f7fb;--card:#fff;--text:#18202f;--muted:#718096;
+  --primary:#6757e8;--primary2:#8b7cf6;--border:#e7eaf1;
+  --success:#18a875;--shadow:0 14px 40px rgba(34,42,70,.08)
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer;border:0}
+.app{display:flex;min-height:100vh}
+.sidebar{width:260px;background:#fff;border-right:1px solid var(--border);padding:24px 16px;position:fixed;inset:0 auto 0 0}
+.logo{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800;padding:4px 10px 28px}
+.logoIcon{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--primary),#9b8cff);display:grid;place-items:center;color:white;font-size:19px;box-shadow:0 8px 20px #6757e83d}
+.nav{display:grid;gap:6px}
+.nav button{background:transparent;color:#687386;text-align:left;padding:12px 14px;border-radius:11px;display:flex;gap:12px;align-items:center}
+.nav button:hover,.nav button.active{background:#f0efff;color:var(--primary);font-weight:650}
+.sidebarBottom{position:absolute;bottom:22px;left:20px;right:20px}
+.teacher{border-top:1px solid var(--border);padding-top:18px;display:flex;align-items:center;gap:10px}
+.avatar{width:38px;height:38px;border-radius:50%;background:#e8e4ff;display:grid;place-items:center;color:var(--primary);font-weight:800}
+main{margin-left:260px;width:calc(100% - 260px);padding:34px;max-width:1500px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+h1{font-size:30px;margin:0 0 6px}
+.subtitle{color:var(--muted)}
+.topActions{display:flex;gap:10px}
+.btn{padding:11px 16px;border-radius:11px;background:#fff;border:1px solid var(--border);color:var(--text);font-weight:650}
+.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 8px 18px #6757e82d}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:17px;padding:20px;box-shadow:var(--shadow)}
+.statTop{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+.statNum{font-size:30px;font-weight:800;margin-top:10px}
+.trend{font-size:12px;color:var(--success);margin-top:5px}
+.layout{display:grid;grid-template-columns:1.5fr 1fr;gap:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+.card h2{font-size:18px;margin:0 0 16px}
+.tools{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.tool{padding:17px;border:1px solid var(--border);border-radius:14px;background:#fff;transition:.2s}
+.tool:hover{transform:translateY(-2px);box-shadow:0 10px 24px #26324b12;border-color:#d8d3ff}
+.toolIcon{font-size:23px;margin-bottom:9px}
+.tool strong{display:block;margin-bottom:4px}
+.tool span{font-size:13px;color:var(--muted)}
+.activity{display:grid;gap:14px}
+.activityItem{display:flex;gap:12px;align-items:flex-start}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--primary);margin-top:7px}
+.activityItem p{margin:0;font-size:14px}.activityItem small{color:var(--muted)}
+.chat{margin-top:20px}
+.chatBox{height:270px;overflow:auto;background:#fafbfe;border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:82%;padding:11px 13px;border-radius:13px;font-size:14px;line-height:1.45}
+.ai{background:#eeecff;align-self:flex-start}.user{background:var(--primary);color:#fff;align-self:flex-end}
+.chatForm{display:flex;gap:8px;margin-top:10px}
+.chatForm input{flex:1;border:1px solid var(--border);border-radius:11px;padding:12px 13px;outline:none}.micBtn{width:46px;border-radius:11px;background:#f0efff;color:var(--primary);border:1px solid #dedaff;font-size:19px}.micBtn.listening{background:#ffe7ec;color:#d92f55;border-color:#ffc5d2;animation:pulse 1.2s infinite}@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.chatForm input:focus{border-color:var(--primary)}
+.modal{position:fixed;inset:0;background:#11182788;display:none;place-items:center;padding:20px;z-index:10}
+.modal.show{display:grid}
+.modalCard{background:#fff;width:min(650px,100%);border-radius:20px;padding:24px;box-shadow:0 30px 80px #0003}
+.modalHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.close{background:#f1f3f7;border-radius:9px;width:34px;height:34px}
+textarea,select{width:100%;border:1px solid var(--border);border-radius:11px;padding:12px;margin:7px 0 14px;outline:none}
+.result{background:#f7f7ff;border-radius:12px;padding:15px;white-space:pre-wrap;line-height:1.5}
+.hidden{display:none}
+@media(max-width:950px){.sidebar{width:78px}.sidebar .nav span,.sidebar .logo span,.sidebarBottom .teacher div{display:none}.logo{justify-content:center}.nav button{justify-content:center}.sidebarBottom{left:18px}.teacher{justify-content:center}main{margin-left:78px;width:calc(100% - 78px)}.grid{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}}
+@media(max-width:600px){main{padding:18px}.grid,.tools{grid-template-columns:1fr}.topActions{display:none}h1{font-size:24px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="logo"><div class="logoIcon">✦</div><span>EduAI</span></div>
+  <nav class="nav">
+    <button class="active" onclick="showSection('dashboard',this)">⌂ <span>Главная</span></button>
+    <button onclick="showSection('lessons',this)">▣ <span>Уроки</span></button>
+    <button onclick="openModal('quiz')">✓ <span>Тесты</span></button>
+    <button onclick="openModal('plan')">☰ <span>Планы уроков</span></button>
+    <button onclick="openModal('chat')">◉ <span>ИИ-помощник</span></button>
+  </nav>
+  <div class="sidebarBottom"><div class="teacher"><div class="avatar">У</div><div><b>Учитель</b><br><small style="color:#718096">Панель управления</small></div></div></div>
+</aside>
+
+<main>
+  <section id="dashboard">
+    <div class="top">
+      <div><h1>Добро пожаловать, Нуржамал Канатовна 👋</h1><div class="subtitle">Ваш ИИ-помощник для подготовки к урокам</div></div>
+      <div class="topActions"><button class="btn" onclick="openModal('chat')">◉ Спросить ИИ</button><button class="btn primary" onclick="openModal('plan')">＋ Создать урок</button></div>
+    </div>
+
+    <div class="grid">
+      <div class="stat"><div class="statTop">Уроков подготовлено <span>▣</span></div><div class="statNum">24</div><div class="trend">↑ 12% за месяц</div></div>
+      <div class="stat"><div class="statTop">Тестов создано <span>✓</span></div><div class="statNum">18</div><div class="trend">↑ 8% за месяц</div></div>
+      <div class="stat"><div class="statTop">Средний результат <span>★</span></div><div class="statNum">86%</div><div class="trend">↑ 4% за месяц</div></div>
+      <div class="stat"><div class="statTop">Сэкономлено времени <span>◷</span></div><div class="statNum">9 ч</div><div class="trend">в этом месяце</div></div>
+    </div>
+
+    <div class="layout">
+      <div class="card">
+        <h2>Инструменты ИИ</h2>
+        <div class="tools">
+          <button class="tool" onclick="openModal('plan')"><div class="toolIcon">📚</div><strong>План урока</strong><span>Создать структуру урока за секунды</span></button>
+          <button class="tool" onclick="openModal('quiz')"><div class="toolIcon">📝</div><strong>Генератор тестов</strong><span>Вопросы с вариантами ответов</span></button>
+          <button class="tool" onclick="openModal('explain')"><div class="toolIcon">💡</div><strong>Объяснить тему</strong><span>Простое объяснение для учеников</span></button>
+          <button class="tool" onclick="openModal('ideas')"><div class="toolIcon">✨</div><strong>Идеи для урока</strong><span>Интерактивы и задания</span></button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Последняя активность</h2>
+        <div class="activity">
+          <div class="activityItem"><div class="dot"></div><div><p>Создан тест по математике</p><small>Сегодня, 10:42</small></div></div>
+          <div class="activityItem"><div class="dot"></div><div><p>Сформирован план урока</p><small>Сегодня, 09:18</small></div></div>
+          <div class="activityItem"><div class="dot"></div><div><p>Объяснение темы «Дроби»</p><small>Вчера, 16:35</small></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card chat">
+      <h2>Быстрый чат с EduAI</h2>
+      <div class="chatBox" id="chatBox"><div class="msg ai">Здравствуйте! Я EduAI. Помогу составить урок, придумать задания, тест или объяснение темы. Что подготовим?</div></div>
+      <form class="chatForm" onsubmit="sendChat(event)"><select id="voiceLang" title="Язык голосового ввода" style="max-width:92px;margin:0;padding:0 8px;border-radius:11px"><option value="ru-RU">RU</option><option value="kk-KZ">ҚАЗ</option></select><input id="chatInput" placeholder="Напишите, что нужно подготовить..." autocomplete="off"><button type="button" class="micBtn" id="micBtn" onclick="toggleVoice()" title="Голосовой ввод">🎙️</button><button class="btn primary">Отправить</button></form>
+    </div>
+  </section>
+
+  <section id="lessons" class="hidden">
+    <div class="top"><div><h1>Мои уроки</h1><div class="subtitle">Создавайте и редактируйте материалы</div></div><button class="btn primary" onclick="openModal('plan')">＋ Новый урок</button></div>
+    <div class="card"><h2>Недавние материалы</h2><div class="activity">
+      <div class="activityItem"><div class="dot"></div><div><p><b>Математика — Дроби</b></p><small>7 класс · 45 минут · план + задания</small></div></div>
+      <div class="activityItem"><div class="dot"></div><div><p><b>История — Великий шёлковый путь</b></p><small>6 класс · 45 минут · презентация</small></div></div>
+      <div class="activityItem"><div class="dot"></div><div><p><b>Английский — Past Simple</b></p><small>7 класс · 40 минут · тест</small></div></div>
+    </div></div>
+  </section>
+</main>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modalCard">
+    <div class="modalHead"><h2 id="modalTitle" style="margin:0">EduAI</h2><button class="close" onclick="closeModal()">×</button></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const modal=document.getElementById('modal'), title=document.getElementById('modalTitle'), body=document.getElementById('modalBody');
+
+let recognition = null;
+let isListening = false;
+
+function setupVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const micBtn = document.getElementById('micBtn');
+  if (!micBtn) return;
+
+  if (!SpeechRecognition) {
+    micBtn.title = 'Голосовой ввод не поддерживается этим браузером';
+    micBtn.onclick = () => alert('Голосовой ввод не поддерживается этим браузером. Попробуйте Google Chrome или Microsoft Edge.');
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.lang = 'ru-RU';
+  recognition.interimResults = true;
+  recognition.continuous = false;
+
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add('listening');
+    micBtn.textContent = '⏹️';
+    micBtn.title = 'Остановить запись';
+  };
+
+  recognition.onresult = (event) => {
+    let finalText = '';
+    let interimText = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) finalText += transcript;
+      else interimText += transcript;
+    }
+    const input = document.getElementById('chatInput');
+    if (input) input.value = (finalText || interimText).trim();
+  };
+
+  recognition.onerror = (event) => {
+    if (event.error === 'not-allowed') {
+      alert('Разрешите доступ к микрофону в настройках браузера.');
+    } else if (event.error === 'language-not-supported') {
+      alert('Выбранный язык голосового ввода не поддерживается этим браузером. Попробуйте Chrome или Edge.');
+    }
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    micBtn.classList.remove('listening');
+    micBtn.textContent = '🎙️';
+    micBtn.title = 'Голосовой ввод';
+  };
+}
+
+function toggleVoice() {
+  if (!recognition) {
+    alert('Голосовой ввод не поддерживается этим браузером. Попробуйте Google Chrome или Microsoft Edge.');
+    return;
+  }
+  if (isListening) {
+    recognition.stop();
+  } else {
+    const langSelect = document.getElementById('voiceLang');
+    recognition.lang = langSelect ? langSelect.value : 'ru-RU';
+    recognition.start();
+  }
+}
+
+window.addEventListener('load', setupVoice);
+function showSection(id,btn){
+  document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+}
+function openModal(type){
+  modal.classList.add('show');
+  const templates={
+    plan:['Создать план урока',`<label>Предмет</label><input id="subject" placeholder="Например: математика"><label>Тема</label><input id="topic" placeholder="Например: Квадратные уравнения"><label>Класс</label><select id="grade"><option>5 класс</option><option>6 класс</option><option>7 класс</option><option>8 класс</option><option>9 класс</option><option>10 класс</option><option>11 класс</option></select><button class="btn primary" onclick="generatePlan()">Сгенерировать</button><div id="result" class="result hidden" style="margin-top:14px"></div>`],
+    quiz:['Генератор тестов',`<label>Предмет и тема</label><input id="qtopic" placeholder="Например: Биология — клетка"><label>Количество вопросов</label><select id="qnum"><option>5</option><option>10</option><option>15</option></select><button class="btn primary" onclick="generateQuiz()">Создать тест</button><div id="result" class="result hidden" style="margin-top:14px"></div>`],
+    explain:['Объяснить тему',`<label>Тема</label><input id="etopic" placeholder="Например: закон Ома"><label>Для какого класса?</label><select id="egrade"><option>5–6</option><option>7–8</option><option>9–11</option></select><button class="btn primary" onclick="explain()">Объяснить</button><div id="result" class="result hidden" style="margin-top:14px"></div>`],
+    ideas:['Идеи для урока',`<label>Тема урока</label><input id="itopic" placeholder="Введите тему"><button class="btn primary" onclick="ideas()">Придумать идеи</button><div id="result" class="result hidden" style="margin-top:14px"></div>`],
+    chat:['ИИ-помощник',`<p style="color:#718096">Задайте вопрос или опишите задачу. Это демо работает прямо в браузере, без сервера.</p><div class="chatBox" style="height:180px"><div class="msg ai">Я готов помочь с планом урока, заданиями, тестами и объяснениями.</div></div><form class="chatForm" onsubmit="modalChat(event)"><input id="mchat" placeholder="Ваш вопрос..."><button class="btn primary">Отправить</button></form>`]
+  };
+  [title.textContent,body.innerHTML]=templates[type]||['EduAI',''];
+}
+function closeModal(){modal.classList.remove('show')}
+modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
+function showResult(text){const r=document.getElementById('result');r.textContent=text;r.classList.remove('hidden')}
+function generatePlan(){
+ let s=document.getElementById('subject').value||'Ваш предмет',t=document.getElementById('topic').value||'указанная тема',g=document.getElementById('grade').value;
+ showResult(`ПЛАН УРОКА — ${t.toUpperCase()}\n\nКласс: ${g}\nПредмет: ${s}\n\n1. Организационный момент — 3 мин.\n2. Актуализация знаний — 7 мин.\n3. Объяснение нового материала — 15 мин.\n4. Практическая работа — 12 мин.\n5. Проверка понимания — 5 мин.\n6. Рефлексия и домашнее задание — 3 мин.\n\nЦель: сформировать понимание темы и применить знания на практике.`);
+}
+function generateQuiz(){
+ let t=document.getElementById('qtopic').value||'выбранная тема',n=document.getElementById('qnum').value;
+ let out=`ТЕСТ: ${t}\n\n`;
+ for(let i=1;i<=Number(n);i++) out+=`${i}. Вопрос по теме «${t}»\n   A) Вариант ответа 1\n   B) Вариант ответа 2\n   C) Вариант ответа 3\n   D) Вариант ответа 4\n   Ответ: A\n\n`;
+ showResult(out);
+}
+function explain(){
+ let t=document.getElementById('etopic').value||'выбранная тема',g=document.getElementById('egrade').value;
+ showResult(`ОБЪЯСНЕНИЕ: ${t}\n\nДля класса ${g}:\n\nПредставим тему простыми словами: сначала определим главное понятие, затем разберём один понятный пример и после этого применим правило на практике.\n\nПример:\n«${t}» можно изучать через жизненную ситуацию, после чего попросить ученика своими словами объяснить правило.\n\nПроверка: попросите ученика привести собственный пример.`);
+}
+function ideas(){
+ let t=document.getElementById('itopic').value||'выбранная тема';
+ showResult(`ИДЕИ ДЛЯ УРОКА: ${t}\n\n• Мини-квиз в начале урока\n• Работа в парах: объяснить тему друг другу\n• Карточки «Верно / Неверно»\n• 5-минутный практический челлендж\n• Командная игра с баллами\n• Финальная рефлексия: «3 вещи, которые я узнал»`);
+}
+function sendChat(e){
+ e.preventDefault();let input=document.getElementById('chatInput'),v=input.value.trim();if(!v)return;
+ addMsg(v,'user');input.value='';
+ setTimeout(()=>addMsg(reply(v),'ai'),350);
+}
+function addMsg(t,c){let d=document.createElement('div');d.className='msg '+c;d.textContent=t;let box=document.getElementById('chatBox');box.appendChild(d);box.scrollTop=box.scrollHeight}
+function reply(v){
+ const x=v.toLowerCase();
+ if(x.includes('тест')) return 'Конечно! Нажмите «Тесты» и укажите предмет, тему и количество вопросов.';
+ if(x.includes('план')||x.includes('урок')) return 'Могу составить структуру урока. Откройте «Планы уроков» и заполните предмет, тему и класс.';
+ if(x.includes('объяс')) return 'Откройте «Объяснить тему» — я подготовлю простое объяснение и пример.';
+ return 'В демо-режиме я могу помочь с планом урока, тестами, объяснениями и идеями. Для настоящего генеративного ИИ потребуется подключение API.';
+}
+function modalChat(e){e.preventDefault();let v=document.getElementById('mchat').value.trim();if(v)alert('EduAI: '+reply(v))}
+</script>
+</body>
+</html>
